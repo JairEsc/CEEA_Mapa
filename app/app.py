@@ -1,35 +1,29 @@
 import dash
 import dash_leaflet as dl
 import dash_leaflet.express as dlx
-import dash_core_components as dcc
+import geopandas as gpd
+
 import dash_bootstrap_components as dbc  # Importa Dash Bootstrap Components
-from dash import Dash, html, Output, Input, State, no_update
-import rasterio
-import numpy as np
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from rasterio.warp import transform_bounds
-import os
+from dash import Dash, html, Output, Input, State, no_update,dcc
 import re
 from dash_extensions.javascript import arrow_function, assign
 import geopandas as gpd
 import funciones_auxiliares
-from funciones_auxiliares import generarMapApartirEleccion_Municipal, generarMapApartirEleccion_Regional, obtenerCentroides_Municipales, obtenerCentroides_Regionales
+from funciones_auxiliares import generarMapApartirEleccion_Municipal, generarMapApartirEleccion_Regional, obtenerCentroides_Municipales, obtenerCentroides_Regionales, generarMap_dosificadores
 from dash.exceptions import PreventUpdate
 from flask import Flask
 
 # Carga de datos y definición de variables
 shp_municipal = gpd.read_file("./assets/Datos/shp/Historicos_Acciones.shp")
 shp_regional = gpd.read_file("./assets/Datos/shp/Regional_.shp")
+shp_dosificadores = gpd.read_file("./assets/Datos/shp/Dosidicadores.shp")
 columns_list = shp_municipal.columns.tolist()
 opciones_cloro = [col for col in columns_list if 'CLORO' in col]
 anios = {i: re.sub(r"CLORO_", "", col) for i, col in enumerate(opciones_cloro)}
 
 map_default_municipal = funciones_auxiliares.generarMapApartirEleccion_Municipal(arhivo_sph=shp_municipal, lista_eleccion=opciones_cloro[-1])
 map_default_regional = funciones_auxiliares.generarMapApartirEleccion_Regional(arhivo_sph=shp_regional, lista_eleccion=opciones_cloro[-1])
+map_dosificadores = funciones_auxiliares.generarMap_dosificadores(arhivo_sph = shp_dosificadores)
 
 
 #########################
@@ -80,7 +74,9 @@ geojson = dl.GeoJSON(
     id="geojson"
 )
 
-
+geojson_dosificadores = dl.GeoJSON(
+    data=map_dosificadores
+)
 ############################################
 ### Definición de Componentes del Layout ###
 ############################################
@@ -407,9 +403,17 @@ mapa = dbc.Row(
                 id="mapa",  # Id asignado para usar en callbacks
                 children=[
                     dl.TileLayer(),
-                    dl.ZoomControl(position="topright"),
-                    geojson,
+                    dl.LayersControl(
+                        children=[
+                            dl.BaseLayer(children=[geojson], name="Cloro Residual Libre", checked=True),
+                            dl.Overlay(children=[geojson_dosificadores], name="Dosificadores de Cloro", checked=False),
+                        ],
+                        position="topright",
+                        id="layers_control",
+                        collapsed= False,  # Para que el control de capas esté expandido por defecto
+                    ),
                     barra_lateral,
+                    dl.ZoomControl(position="topleft"),
                 ],
                 center=[20.41509, -98.82936],  # Coordenadas iniciales
                 zoom=9,
@@ -641,4 +645,4 @@ def update_map(latitud, current_map):
 #################
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run()

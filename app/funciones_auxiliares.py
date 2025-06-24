@@ -47,7 +47,29 @@ def generarMapApartirEleccion_Regional(arhivo_sph, lista_eleccion):
     }
     return geojson_data
 
-
+def generarMap_dosificadores(arhivo_sph):
+    geojson_data = {
+        "type": "FeatureCollection",        # Dices que es geojson
+        "features": [                       # Lista de los objetos
+            {
+                "type": "Feature",                  # Cada objeto que se vaya creando es de ese tipo
+                "geometry": feature["geometry"],    # Le pone la geometria
+                "properties": {                     # Cada objeto va ha tener propiedades
+                    **feature["properties"],        # Pasa por filas
+                    "tooltip": f"Locacion: <b>{feature['properties'].get('Locacin','N/A')}</b>", # Pasar Mouse por encima, le puedo agragar un popup
+                    "popup": (f"Municipio: <b>{feature['properties'].get('Municip','N/A')}</b><br>"
+                              f"Locacion: <b>{feature['properties'].get('Locacin','N/A')}</b><br>"
+                              f"Año: <b>{feature['properties'].get('Año','N/A')}</b><br>"
+                              f"Estado: <b>{feature['properties'].get('estado','N/A')}</b><br>"
+                              f"Gasto de agua: <b>{feature['properties'].get('Gastdag','N/A')}</b><br>"
+                              f"Marca: <b>{feature['properties'].get('Marca','N/A')}</b><br>"
+                              f"Modelo: <b>{feature['properties'].get('Modelo','N/A')}</b><br>")
+                }
+            }
+            for idx, feature in enumerate(arhivo_sph.__geo_interface__["features"])        # map_ es del tipo geopandas
+        ]
+    }
+    return geojson_data
 
 def obtenerCentroides_Municipales(shp):
     # Filtrar solo las columnas necesarias
