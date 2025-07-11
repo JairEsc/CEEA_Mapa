@@ -51,7 +51,9 @@ path.leaflet-interactive:focus {
 }
 
 
-
+.sortable-handler {
+  touch-action: none;
+}
 
 
 

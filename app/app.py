@@ -2,7 +2,7 @@ import dash
 import dash_leaflet as dl
 import dash_leaflet.express as dlx
 import geopandas as gpd
-
+import os
 import dash_bootstrap_components as dbc  # Importa Dash Bootstrap Components
 from dash import Dash, html, Output, Input, State, no_update,dcc
 import re
@@ -12,6 +12,17 @@ import funciones_auxiliares
 from funciones_auxiliares import generarMapApartirEleccion_Municipal, generarMapApartirEleccion_Regional, obtenerCentroides_Municipales, obtenerCentroides_Regionales, generarMap_dosificadores
 from dash.exceptions import PreventUpdate
 from flask import Flask
+##Cargamos variables de la segunda pagina:
+archivos = os.listdir("./assets/Datos/Mapas/") 
+archivos_html = [f for f in archivos if f.endswith(".html")]
+
+anios_nh = [re.sub(r"\.html", "", i) for i in archivos_html]
+anios_nh = [re.sub(r"Mapa_", "", i) for i in anios_nh]
+anios_nh = {i: anio for i, anio in enumerate(anios_nh)}
+# anios_nh=0
+# archivos_html = [os.path.join("./assets/Datos/Mapas/", f) for f in archivos_html]
+
+
 
 #Carga de datos y definición de variables
 shp_municipal = gpd.read_file("./assets/Datos/shp/Historicos_Acciones.shp")
@@ -250,6 +261,15 @@ def navigate2(n_clicks):
 #################
 ### Copilador ###
 #################
+@app.callback(
+    Output("mapa_nh", "src"),
+    Input("slider_periodo_nh", "value")
+)
+def actualizar_mapa(value):
+    direccion_mapa = f"/assets/Datos/Mapas/Mapa_{anios_nh[value]}.html"
+    #print(direccion_mapa)
+    return direccion_mapa
+
 
 if __name__ == '__main__':
     app.run()
